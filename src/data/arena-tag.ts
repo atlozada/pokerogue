@@ -9,8 +9,10 @@ import { StatusEffect } from "./status-effect";
 import { BattlerIndex } from "../battle";
 import { Moves } from "./enums/moves";
 import { ArenaTagType } from "./enums/arena-tag-type";
-import { BlockNonDirectDamageAbAttr, ProtectStatAbAttr, applyAbAttrs } from "./ability";
+import { ArenaTagAbAttr, BlockNonDirectDamageAbAttr, ProtectStatAbAttr, allAbilities, applyAbAttrs } from "./ability";
 import { BattleStat } from "./battle-stat";
+import { NONE } from "phaser";
+import { Abilities } from "./enums/abilities";
 
 export enum ArenaTagSide {
   BOTH,
@@ -455,6 +457,26 @@ export class GravityTag extends ArenaTag {
   }
 }
 
+export class RuinTag extends ArenaTag {
+  
+  constructor(arenaTagType: ArenaTagType, sourceId: integer) {
+    super(arenaTagType, Infinity, NONE, sourceId)
+  }
+
+  override lapse(arena: Arena): boolean {
+    let isAbilityOwnerActive = arena.scene.getField(true).find(p => this.findAbilityByTagType(p))
+
+    console.log(`Attempting to lapse arena tag ${this.tagType} - ${!!isAbilityOwnerActive}`)
+    return !!isAbilityOwnerActive
+  }
+
+  private findAbilityByTagType(p: Pokemon) {
+    return allAbilities[p.summonData.ability]
+      .getAttrs(ArenaTagAbAttr)
+      .find((a: ArenaTagAbAttr) => a.getTagType() == this.tagType)
+  }
+}
+
 export function getArenaTag(tagType: ArenaTagType, turnCount: integer, sourceMove: Moves, sourceId: integer, targetIndex?: BattlerIndex, side: ArenaTagSide = ArenaTagSide.BOTH): ArenaTag {
   switch (tagType) {
     case ArenaTagType.MIST:
@@ -484,5 +506,10 @@ export function getArenaTag(tagType: ArenaTagType, turnCount: integer, sourceMov
       return new LightScreenTag(turnCount, sourceId, side);
     case ArenaTagType.AURORA_VEIL:
       return new AuroraVeilTag(turnCount, sourceId, side);
+    case ArenaTagType.BEADS_OF_RUIN:
+    case ArenaTagType.VESSEL_OF_RUIN:
+    case ArenaTagType.SWORD_OF_RUIN:
+    case ArenaTagType.TABLETS_OF_RUIN:
+      return new RuinTag(tagType, sourceId);
   }
 }

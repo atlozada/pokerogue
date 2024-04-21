@@ -62,7 +62,7 @@ import { Variant, variantData } from './data/variant';
 export const bypassLogin = import.meta.env.VITE_BYPASS_LOGIN === "1";
 
 export const SEED_OVERRIDE = '';
-export const STARTER_SPECIES_OVERRIDE = 0;
+export const STARTER_SPECIES_OVERRIDE = Species.MUDKIP;
 export const STARTER_FORM_OVERRIDE = 0;
 export const STARTING_LEVEL_OVERRIDE = 0;
 export const STARTING_WAVE_OVERRIDE = 0;
@@ -70,8 +70,8 @@ export const STARTING_BIOME_OVERRIDE = Biome.TOWN;
 export const STARTING_MONEY_OVERRIDE = 0;
 
 export const ABILITY_OVERRIDE = Abilities.NONE;
-export const MOVE_OVERRIDE = Moves.NONE;
-export const OPP_SPECIES_OVERRIDE = 0;
+export const MOVE_OVERRIDE = Moves.SKILL_SWAP;
+export const OPP_SPECIES_OVERRIDE = Species.CHI_YU;
 export const OPP_ABILITY_OVERRIDE = Abilities.NONE;
 export const OPP_MOVE_OVERRIDE = Moves.NONE;
 
@@ -614,6 +614,7 @@ export default class BattleScene extends SceneBase {
 	}
 
 	getEnemyParty(): EnemyPokemon[] {
+		
 		return this.currentBattle?.enemyParty || [];
 	}
 

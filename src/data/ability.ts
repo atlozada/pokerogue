@@ -9,7 +9,7 @@ import { BattlerTag } from "./battler-tags";
 import { BattlerTagType } from "./enums/battler-tag-type";
 import { StatusEffect, getStatusEffectDescriptor, getStatusEffectHealText } from "./status-effect";
 import { Gender } from "./gender";
-import Move, { AttackMove, MoveCategory, MoveFlags, MoveTarget, RecoilAttr, StatusMoveTypeImmunityAttr, allMoves } from "./move";
+import Move, { AddArenaTagAttr, AttackMove, MoveCategory, MoveFlags, MoveTarget, RecoilAttr, StatusMoveTypeImmunityAttr, allMoves } from "./move";
 import { ArenaTagType } from "./enums/arena-tag-type";
 import { Stat } from "./pokemon-stat";
 import { PokemonHeldItemModifier } from "../modifier/modifier";
@@ -17,6 +17,7 @@ import { Moves } from "./enums/moves";
 import { TerrainType } from "./terrain";
 import { SpeciesFormChangeManualTrigger } from "./pokemon-forms";
 import { Abilities } from "./enums/abilities";
+import { Arena } from "#app/field/arena.js";
 
 export class Ability {
   public id: Abilities;
@@ -2066,6 +2067,32 @@ export class SuppressFieldAbilitiesAbAttr extends AbAttr {
   }
 }
 
+export class ArenaTagAbAttr extends AbAttr {
+  private tagType: ArenaTagType;
+
+  constructor(tagType: ArenaTagType) {
+    super(false);
+    this.tagType = tagType;
+  }
+  
+
+  apply(pokemon: Pokemon, passive: boolean, cancelled: Utils.BooleanHolder, args: any[]): boolean {
+    let arena: Arena = args[0]
+    
+    if (!cancelled.value) {
+      console.log(`Adding ArenaTag ${this.tagType}`)
+      return arena.addTag(this.tagType, Infinity, Moves.NONE, pokemon.id)
+    } else {
+      console.log(`Removing ArenaTag ${this.tagType} - cancelled ${cancelled.value}`)
+      return arena.removeTag(this.tagType)
+    }
+  }
+
+  getTagType(): ArenaTagType {
+    return this.tagType;
+  }
+}
+
 export class UncopiableAbilityAbAttr extends AbAttr {
   constructor() {
     super(false);
@@ -2274,6 +2301,11 @@ export function applyPostBattleAbAttrs(attrType: { new(...args: any[]): PostBatt
 export function applyPostFaintAbAttrs(attrType: { new(...args: any[]): PostFaintAbAttr },
   pokemon: Pokemon, attacker: Pokemon, move: PokemonMove, hitResult: HitResult, ...args: any[]): Promise<void> {
   return applyAbAttrsInternal<PostFaintAbAttr>(attrType, pokemon, (attr, passive) => attr.applyPostFaint(pokemon, passive, attacker, move, hitResult, args), args);
+}
+
+export function applyArenaTagAbAttrs(attrType: { new(...args: any[]): ArenaTagAbAttr }, pokemon: Pokemon, cancelled: Utils.BooleanHolder, arena: Arena, ...args: any[]) {
+  console.log("Applying AbAttrsInternal")
+  return applyAbAttrsInternal<ArenaTagAbAttr>(attrType, pokemon, (attr, passive) => attr.apply(pokemon, passive, cancelled, [arena]), args);
 }
 
 function canApplyAttr(pokemon: Pokemon, attr: AbAttr): boolean {
@@ -3043,14 +3075,14 @@ export function initAbilities() {
     new Ability(Abilities.GOOD_AS_GOLD, "Good as Gold (P)", "A body of pure, solid gold gives the Pokémon full immunity to other Pokémon's status moves.", 9)
       .attr(MoveImmunityAbAttr, (pokemon, attacker, move) => pokemon !== attacker && move.getMove().category === MoveCategory.STATUS)
       .ignorable(),
-    new Ability(Abilities.VESSEL_OF_RUIN, "Vessel of Ruin (N)", "The power of the Pokémon's ruinous vessel lowers the Sp. Atk stats of all Pokémon except itself.", 9)
-      .ignorable(),
-    new Ability(Abilities.SWORD_OF_RUIN, "Sword of Ruin (N)", "The power of the Pokémon's ruinous sword lowers the Defense stats of all Pokémon except itself.", 9)
-      .ignorable(),
-    new Ability(Abilities.TABLETS_OF_RUIN, "Tablets of Ruin (N)", "The power of the Pokémon's ruinous wooden tablets lowers the Attack stats of all Pokémon except itself.", 9)
-      .ignorable(),
-    new Ability(Abilities.BEADS_OF_RUIN, "Beads of Ruin (N)", "The power of the Pokémon's ruinous beads lowers the Sp. Def stats of all Pokémon except itself.", 9)
-      .ignorable(),
+    new Ability(Abilities.VESSEL_OF_RUIN, "Vessel of Ruin", "The power of the Pokémon's ruinous vessel lowers the Sp. Atk stats of all Pokémon except itself.", 9)
+      .attr(ArenaTagAbAttr, ArenaTagType.VESSEL_OF_RUIN),
+    new Ability(Abilities.SWORD_OF_RUIN, "Sword of Ruin", "The power of the Pokémon's ruinous sword lowers the Defense stats of all Pokémon except itself.", 9)
+      .attr(ArenaTagAbAttr, ArenaTagType.SWORD_OF_RUIN),
+    new Ability(Abilities.TABLETS_OF_RUIN, "Tablets of Ruin", "The power of the Pokémon's ruinous wooden tablets lowers the Attack stats of all Pokémon except itself.", 9)
+      .attr(ArenaTagAbAttr, ArenaTagType.TABLETS_OF_RUIN),
+    new Ability(Abilities.BEADS_OF_RUIN, "Beads of Ruin", "The power of the Pokémon's ruinous beads lowers the Sp. Def stats of all Pokémon except itself.", 9)
+      .attr(ArenaTagAbAttr, ArenaTagType.BEADS_OF_RUIN),
     new Ability(Abilities.ORICHALCUM_PULSE, "Orichalcum Pulse", "Turns the sunlight harsh when the Pokémon enters a battle. The ancient pulse thrumming through the Pokémon also boosts its Attack stat in harsh sunlight.", 9)
       .attr(PostSummonWeatherChangeAbAttr, WeatherType.SUNNY)
       .attr(PostBiomeChangeWeatherChangeAbAttr, WeatherType.SUNNY)

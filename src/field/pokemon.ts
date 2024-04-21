@@ -27,7 +27,7 @@ import { TempBattleStat } from '../data/temp-battle-stat';
 import { ArenaTagSide, WeakenMoveScreenTag, WeakenMoveTypeTag } from '../data/arena-tag';
 import { ArenaTagType } from "../data/enums/arena-tag-type";
 import { Biome } from "../data/enums/biome";
-import { Ability, AbAttr, BattleStatMultiplierAbAttr, BlockCritAbAttr, BonusCritAbAttr, BypassBurnDamageReductionAbAttr, FieldPriorityMoveImmunityAbAttr, FieldVariableMovePowerAbAttr, IgnoreOpponentStatChangesAbAttr, MoveImmunityAbAttr, MoveTypeChangeAttr, NonSuperEffectiveImmunityAbAttr, PreApplyBattlerTagAbAttr, PreDefendFullHpEndureAbAttr, ReceivedMoveDamageMultiplierAbAttr, ReduceStatusEffectDurationAbAttr, StabBoostAbAttr, StatusEffectImmunityAbAttr, TypeImmunityAbAttr, VariableMovePowerAbAttr, VariableMoveTypeAbAttr, WeightMultiplierAbAttr, allAbilities, applyAbAttrs, applyBattleStatMultiplierAbAttrs, applyPostDefendAbAttrs, applyPreApplyBattlerTagAbAttrs, applyPreAttackAbAttrs, applyPreDefendAbAttrs, applyPreSetStatusAbAttrs, UnsuppressableAbilityAbAttr, SuppressFieldAbilitiesAbAttr, NoFusionAbilityAbAttr } from '../data/ability';
+import { Ability, AbAttr, BattleStatMultiplierAbAttr, BlockCritAbAttr, BonusCritAbAttr, BypassBurnDamageReductionAbAttr, FieldPriorityMoveImmunityAbAttr, FieldVariableMovePowerAbAttr, IgnoreOpponentStatChangesAbAttr, MoveImmunityAbAttr, MoveTypeChangeAttr, NonSuperEffectiveImmunityAbAttr, PreApplyBattlerTagAbAttr, PreDefendFullHpEndureAbAttr, ReceivedMoveDamageMultiplierAbAttr, ReduceStatusEffectDurationAbAttr, StabBoostAbAttr, StatusEffectImmunityAbAttr, TypeImmunityAbAttr, VariableMovePowerAbAttr, VariableMoveTypeAbAttr, WeightMultiplierAbAttr, allAbilities, applyAbAttrs, applyBattleStatMultiplierAbAttrs, applyPostDefendAbAttrs, applyPreApplyBattlerTagAbAttrs, applyPreAttackAbAttrs, applyPreDefendAbAttrs, applyPreSetStatusAbAttrs, UnsuppressableAbilityAbAttr, SuppressFieldAbilitiesAbAttr, NoFusionAbilityAbAttr, ArenaTagAbAttr } from '../data/ability';
 import { Abilities } from "#app/data/enums/abilities";
 import PokemonData from '../system/pokemon-data';
 import Battle, { BattlerIndex } from '../battle';
@@ -529,6 +529,7 @@ export default abstract class Pokemon extends Phaser.GameObjects.Container {
   }
 
   getBattleStat(stat: Stat, opponent?: Pokemon, move?: Move, isCritical: boolean = false): integer {
+    console.log(`Getting battle stat - ${stat}`)
     if (stat === Stat.HP)
       return this.getStat(Stat.HP);
     const battleStat = (stat - 1) as BattleStat;
@@ -557,18 +558,30 @@ export default abstract class Pokemon extends Phaser.GameObjects.Container {
     let ret = statValue.value * (Math.max(2, 2 + statLevel.value) / Math.max(2, 2 - statLevel.value));
     switch (stat) {
       case Stat.ATK:
+        if (!(this.summonData.ability == Abilities.TABLETS_OF_RUIN) && this.scene.arena.tags.find(t => t.tagType == ArenaTagType.TABLETS_OF_RUIN))
+          console.log("Applying Tablets of Ruin")
+          ret *= .75;
         if (this.getTag(BattlerTagType.SLOW_START))
           ret >>= 1;
         break;
       case Stat.DEF:
         if (this.isOfType(Type.ICE) && this.scene.arena.weather?.weatherType === WeatherType.SNOW)
           ret *= 1.5;
+        if (!(this.summonData.ability == Abilities.SWORD_OF_RUIN) && this.scene.arena.tags.find(t => t.tagType == ArenaTagType.SWORD_OF_RUIN))
+          console.log("Applying Sword of Ruin")
+          ret *= .75;
         break;
       case Stat.SPATK:
+        if (!(this.summonData.ability == Abilities.VESSEL_OF_RUIN) && this.scene.arena.tags.find(t => t.tagType == ArenaTagType.VESSEL_OF_RUIN))
+          console.log("Applying Vessel of Ruin")
+          ret *= .75;
         break;
       case Stat.SPDEF:
         if (this.isOfType(Type.ROCK) && this.scene.arena.weather?.weatherType === WeatherType.SANDSTORM)
           ret *= 1.5;
+        if (!(this.summonData.ability == Abilities.BEADS_OF_RUIN) && this.scene.arena.tags.find(t => t.tagType == ArenaTagType.BEADS_OF_RUIN))
+          console.log("Applying Beads of Ruin")
+          ret *= .75;
         break;
       case Stat.SPD:
         if (this.getTag(BattlerTagType.SLOW_START))
@@ -695,7 +708,7 @@ export default abstract class Pokemon extends Phaser.GameObjects.Container {
       : this.moveset;
 
     if (MOVE_OVERRIDE && this.isPlayer())
-      this.moveset[0] = new PokemonMove(MOVE_OVERRIDE, Math.min(this.moveset[0].ppUsed, allMoves[MOVE_OVERRIDE].pp));
+      this.moveset[2] = new PokemonMove(MOVE_OVERRIDE, Math.min(this.moveset[0].ppUsed, allMoves[MOVE_OVERRIDE].pp));
     else if (OPP_MOVE_OVERRIDE && !this.isPlayer())
       this.moveset[0] = new PokemonMove(OPP_MOVE_OVERRIDE, Math.min(this.moveset[0].ppUsed, allMoves[OPP_MOVE_OVERRIDE].pp));
 
